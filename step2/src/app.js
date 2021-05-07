@@ -2,10 +2,7 @@ const express = require('express')
 const Chance = require('chance')()
 const app = express()
 const port = 3000
-
 const data = require('./data/units')
-
-console.log()
 
 /**
  * API Main endpoint
@@ -15,24 +12,33 @@ app.get('/', (req, res) => {
 })
 
 /**
- * Send a grade for each available unit
+ * Send a random grade for each available unit
  */
 app.get('/grades', (req, res) => {
    res.send(generateGrades())
-   //res.send(Chance.address)
 })
 
 /**
- * Sends the grade of a wished unit
+ * Sends the random grade of a wished unit
  */
-app.get('/grade/:module', (req, res) => {
-   if (data.units.includes(req.params.module.toUpperCase())) {
+app.get('/grade/:unit', (req, res) => {
+   if (data.units.includes(req.params.unit.toUpperCase())) {
       res.send({
-         unit: Chance.pickone(data.units),
-         grade: Chance.integer({ min: 1, max: 6 })
+         unit: req.params.unit.toUpperCase(),
+         grade: randGrade()
       })
    }
    else res.status(404).send('This unit does not exist');
+})
+
+/**
+ * Send one random unith with random grade
+ */
+app.get('/one', (req, res) => {
+   res.send({
+      unit: Chance.pickone(data.units),
+      grade: Chance.integer({ min: 1, max: 6 })
+   })
 })
 
 /**
@@ -42,11 +48,13 @@ app.listen(port, () => {
    console.log(`Listening at http://localhost:${port}`)
 })
 
-function generateGrades () {
+const generateGrades = () => {
    return data.units.map(u => {
       return {
          unit: u,
-         grade: Chance.integer({ min: 1, max: 6 })
+         grade: randGrade()
       }
    })
 }
+
+const randGrade = () => Chance.integer({ min: 1, max: 6 })
