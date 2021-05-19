@@ -36,9 +36,7 @@ COPY src/ /var/www/html/
 
 Pour construire notre image et démarrer le container, il faut exécuter les commandes suivantes:
 
-- `cd ./step1`
-
-- `docker build -t res/static-apache .`
+- `docker build -t res/static-apache ./step1`
 
 - `docker run -d --name static_apache -p 9090:80 res/static-apache`
 
@@ -100,20 +98,21 @@ Cette API dispose de 4 routes:
       {"unit":"ASD", "grade":1},
       {"unit":"ISD", "grade":4},
       {"unit":"MAT1", "grade":1},
-               ...
+      ...
       {"unit":"TIB", "grade":4}
    ]
    ```
 
 
-- [http://localhost:8282/grade/(unit)](http://localhost:8282/grade/<unit>)
+- [http://localhost:8282/grade/res](http://localhost:8282/grade/res)
 
    Une requête HTTP sur cette URL retournera une note pour l'unité passée en paramètre, la liste des unités disponibles se trouve [ici](./step2/src/data/units.js).
 
    ```json
-   [
-      {"unit":"RES", "grade":6},
-   ]
+   {
+      "unit":"RES",
+      "grade":6
+   }
    ```
 
 - [http://localhost:8282/one](http://localhost:8282/one)
@@ -121,9 +120,10 @@ Cette API dispose de 4 routes:
     Une requête HTTP sur cette URL retournera une note pour une unité aléatoire.
 
    ```json
-   [
-      {"unit":"SYE", "grade":6}
-   ]
+   {
+      "unit":"SYE",
+      "grade":6
+   }
    ```
 
 # Step 3: Reverse proxy with apache (static configuration)
