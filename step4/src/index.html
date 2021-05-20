@@ -77,28 +77,27 @@
    </div>
    <footer class="footer">
       <div class="content has-text-centered">
-        <p>
-          <strong>Bulma</strong> by <a href="https://jgthms.com">Jeremy Thomas</a>. The source code is licensed
-          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
-          is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
-        </p>
+         <p>
+            <strong>Bulma</strong> by <a href="https://jgthms.com">Jeremy Thomas</a>. The source code is licensed
+            <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
+            is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+         </p>
       </div>
-    </footer>
+   </footer>
 
-    <script defer>
-        async function getGrades () {
-           // TODO: Change this to /api/grades
-            data = await fetch('http://localhost:8282/')
-               .then(response => response.json())
-               .catch(() => console.log('Error while getting grades'))
+   <script defer>
+      // This gets all grades from the API route
+      async function getGrades() {
+         return await fetch('api/grades')
+            .then(response => response.json())
+            .catch(() => console.log('Error while getting grades'))
+      }
 
-            return data
-        }
+      getGrades()
 
-        data = getGrades()
-
-        console.log(data)
-    </script>
+      // Set an interval of 3 seconds that triggers the grade request function
+      setInterval(() => getGrades(), 3000)
+   </script>
 </body>
 
 </html>
