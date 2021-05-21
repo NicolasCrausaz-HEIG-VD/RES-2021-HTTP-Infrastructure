@@ -173,8 +173,9 @@ ainsi qu'a l'API express [http://reverse.res.ch:8080/api/grades](http://reverse.
 Cette configuration actuelle est très contraignante car nous devons être sûr que les bonnes addresses IP des containers sont spécifiées
 dans la configuration apache du reverse proxy.
 
+Voici l'état actuel de notre infrastructure 
 
-TODO: AJOUTER UN SHEMA DE L'INFRA
+![](./figures/step3.png)
 
 ## Docker
 
