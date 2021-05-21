@@ -2,7 +2,7 @@
 set -e
 
 # Add setup for RES lab
-echo "Setup for the res lab..."
+echo "Setup for the RES lab..."
 echo "Static app URL: $STATIC_APP"
 echo "Dynamic app URL: $DYNAMIC_APP"
 
