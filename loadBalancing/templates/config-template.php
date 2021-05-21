@@ -14,7 +14,7 @@
    		<?php 
    			foreach($dynamicsTokens as $server)
    			{
-				echo('BalancerMember "' . 'http://' . $server . '/"' . '\n');
+				echo('BalancerMember "' . 'http://' . $server . '"' . "\n");
    			}
    		?>
 	</Proxy>
@@ -26,7 +26,7 @@
 	    <?php 
    			foreach($staticsTokens as $server)
    			{
-				echo('BalancerMember "' . 'http://' . $server . '/"' . '\n');
+				echo('BalancerMember "' . 'http://' . $server . '"' . "\n");
    			}
    		?>
 	</Proxy>
