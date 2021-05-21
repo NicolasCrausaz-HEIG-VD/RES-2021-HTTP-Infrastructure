@@ -151,6 +151,29 @@ Notre configuration est donc:
 </VirtualHost>
 ```
 
+Pour que cette configuration fonctionne, il faut ajouter une entrée DNS dans le fichier HOST de la machine
+ici, nous avons ajouté:
+
+`localhost reverse.res.ch`
+
+Il faut également démarrer les containers dans le bon ordre:
+
+- `docker run -d --name static_apache -p 9090:80 res/static-apache`
+
+- `docker run -d --name express_dynamic -p 8282:3000 res/node-express`
+
+- `docker build -t res/reverseproxy .`
+
+- `docker run -d -p 8080:80 --name reverse_proxy  res/reverseproxy`
+
+
+Notre reverse proxy est désormais fonctionnel, on peut accéder au site statique apache: [http://reverse.res.ch:8080](http://reverse.res.ch:8080)
+ainsi qu'a l'API express [http://reverse.res.ch:8080/api/grades](http://reverse.res.ch:8080/api/grades)
+
+Cette configuration actuelle est très contraignante car nous devons être sûr que les bonnes addresses IP des containers sont spécifiées
+dans la configuration apache du reverse proxy.
+
+
 TODO: AJOUTER UN SHEMA DE L'INFRA
 
 ## Docker
@@ -168,13 +191,88 @@ RUN a2enmod proxy proxy_http
 RUN a2ensite 000-* 001-*
 ```
 
-You are able to explain why the static configuration is fragile and needs to be improved.
-You have documented your configuration in your report.
-
 # Step 4: AJAX requests with JQuery
 
-See documentation [here](./step4/README.md)
+Pour cette étape, il s'agit de se familiariser avec les requêtes AJAX (Asynchronous JavaScript and XML).
+Pour se faire nous avons utilisé l'API native javascript *fetch*.
+
+Nous avons modifié notre image du step1 pour y ajouter des requêtes AJAX sur notre application du step2 (Express.js).
+
+Le site statique récupère des notes aléatoires à intervalle de 3 secondes et les affiches sous forme de tableau.
+
+## Docker
+
+Notre image est la même qu'au step1, nous avons simplement installer vim pour modifier notre site directement sur le container.
+
+```dockerfile
+FROM php:7.4-apache
+
+RUN apt-get update && apt-get install -y vim
+
+COPY src/ /var/www/html/
+```
+
+Notre container peut être démarré de cette manière:
+
+- `docker build -t res/static-ajax ./step4`
+
+- `docker run -d --name static_ajax -p 9090:80 res/static-ajax`
+
+Pour que les requêtes vers l'API soient fonctionnelle, il accéder au site par le reverse proxy [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
+Ceci est du à la Policy _Same-origin_ qui restreint la manière dont les ressources peuvent être chargées depuis une origine, vers une origine différente.
+
+Dans notre cas, si l'on utilise pas le reverse proxy, on aurait notre site statique sur localhost:9090 et notre API sur localhost:8282.
+Ces deux origines sont considérées comme différentes, de ce fait notre site ne pourra pas effectuer de requêtes vers l'API.
+
+Il y a deux solution pour contourner cette policy:
+
+- Utiliser un *reverse proxy*, ce qui fera que les deux sites soient dans la même _origin_. C'est la solution choisie ici.
+
+- Mettre en place la validation *CORS* (Cross-origin resource sharing) au niveau du serveur HTTP (express), ce qui permettra de partager des 
+ressources entre plusieurs origines.
+
+TODO: Inserer une capture des notes
 
 # Step 5: Dynamic reverse proxy configuration
 
-See documentation [here](./step5/README.md)
+L'objectif de cette étape est d'améliorer notre reverse proxy pour avoir une configuration dynamique, pour ne pas avoir à modifier
+notre fichier de configuration apache.
+
+## Docker
+
+Nous avons modifié notre image du step3 pour ajouter quelques commandes:
+
+```dockerfile
+FROM php:7.4-apache
+
+RUN apt-get update && apt-get install -y vim
+
+COPY apache2-foreground /usr/local/bin/
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+
+Nous copions notre script php qui permet de générer dynamiquement notre fichier de configuration du reverse proxy.
+Nous copions aussi le fichier _apache2-foreground_, il s'agit du script qui est exécuté lors de la construction de l'image source (php7.4),
+nous avons utilisé ce fichier pour ajouter des variables d'environnement à notre container ($STATIC_APP et $DYNAMIC_APP).
+Ces variables nous permettent de spécifier les adresses de nos deux services (site et API).
+
+Il faut démarrer les containers sur step 2 et 4, puis démarrer notre reverse proxy dynamique:
+
+- `docker build -t res/dynamic-proxy .`
+
+- `docker run -e STATIC_APP=172.17.0.3:80 -e DYNAMIC_APP=172.17.0.2:3000 res/dynamic-proxy`
+
+Pour tester le reverse proxy, il suffit de se rendre sur [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
+Le site doit fonctionner comme auparavant, c'est à dire mettre à jour se liste de note toutes les 3 secondes.
+
+# Additional steps: Load balancing: multiple server nodes
+
+# Additional steps: Load balancing: round-robin vs sticky sessions
+
+# Additional steps: Dynamic cluster management
+
+# Additional steps: Management UI
