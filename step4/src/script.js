@@ -1,11 +1,16 @@
 // This gets all grades from the API route
-async function getGrades () {
-   return await fetch('api/grades')
-      .then(response => response.json())
+async function getAndWriteGrades () {
+   const data = await fetch('api/grades')
+      .then(response => { return response.json() })
       .catch(() => console.log('Error while getting grades'))
+
+   document.getElementById("gradesTable").innerHTML = ''
+
+   data.forEach(grade => {
+      document.getElementById("gradesTable").innerHTML += `<tr><td>${grade.unit}</td><td>${grade.grade}</td></tr>`
+   })
 }
 
-getGrades()
+getAndWriteGrades()
 
-// Set an interval of 3 seconds that triggers the grade request function
-setInterval(() => getGrades(), 3000)
+setInterval(() => getAndWriteGrades(), 3000)
