@@ -14,7 +14,6 @@ Les outils utilisés tout au long de ce laboratoire sont:
 - Node.js v14.16
 - php v7.4
 - apache
-- JQuery
 
 # Step 1: Static HTTP server with apache httpd
 
@@ -192,7 +191,7 @@ RUN a2enmod proxy proxy_http
 RUN a2ensite 000-* 001-*
 ```
 
-# Step 4: AJAX requests with JQuery
+# Step 4: AJAX requests
 
 Pour cette étape, il s'agit de se familiariser avec les requêtes AJAX (Asynchronous JavaScript and XML).
 Pour se faire nous avons utilisé l'API native javascript *fetch*.
@@ -268,9 +267,57 @@ Il faut démarrer les containers sur step 2 et 4, puis démarrer notre reverse p
 - `docker run -e STATIC_APP=172.17.0.3:80 -e DYNAMIC_APP=172.17.0.2:3000 res/dynamic-proxy`
 
 Pour tester le reverse proxy, il suffit de se rendre sur [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
-Le site doit fonctionner comme auparavant, c'est à dire mettre à jour se liste de note toutes les 3 secondes.
+Le site doit fonctionner comme auparavant, c'est à dire mettre à jour la liste de note toutes les 3 secondes.
 
 # Additional steps: Load balancing: multiple server nodes
+
+Dans cette étape, nous ajoutons un système de load balancing sur notre reverse proxy dynamique (step 5).
+
+Ceci nous permet d'avoir plusieurs containers pour chaque service (notre site statique et notre API), le reverse proxy ayant
+désormais un rôle supplémentaire de load balancer, s'occupera de répartir les requêtes clients vers les différents _nodes_.
+
+## Docker
+
+Pour cette étape nous ré-utilisons la même image Docker, nous modifions seulement notre script PHP de génération de configuration apache,
+il permet désormais d'avoir un nombre variable d'hôtes pour nos deux services. On spécifie nos hôtes par une liste d'addresses séparées par des virgules.
+Pour démarrer le load balancing:
+
+- `docker build -t res/load-balancing .`
+
+- `docker run res/load-balancing`
+
+- `docker run -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/load-balancing`
+
+La configuration résultante sera:
+
+```conf
+
+<VirtualHost *:80>
+   ServerName reverse.res.ch
+
+   # Routes for api requests (random grades)
+   <Proxy 'balancer://dynamic_cluster'>
+      BalancerMember "http://172.17.0.3:3000/"
+      BalancerMember "http://172.17.0.9:3000/"
+      BalancerMember "http://172.17.0.10:3000/"
+	</Proxy>
+
+   ProxyPass '/api/' 'balancer://dynamic_cluster'
+   ProxyPassReverse '/api/' 'balancer://dynamic_cluster'
+
+   # Routes for static website
+   <Proxy 'balancer://static_cluster'>
+      BalancerMember "http://172.17.0.2:80/"
+      BalancerMember "http://172.17.0.5:80/"
+      BalancerMember "http://172.17.0.6:80/"
+	</Proxy>
+
+   ProxyPass '/' 'balancer://static_cluster'
+   ProxyPassReverse '/' 'balancer://static_cluster'
+</VirtualHost>
+
+```
+
 
 # Additional steps: Load balancing: round-robin vs sticky sessions
 
