@@ -291,7 +291,6 @@ Pour démarrer le load balancing:
 La configuration résultante sera:
 
 ```conf
-
 <VirtualHost *:80>
    ServerName reverse.res.ch
 
@@ -315,11 +314,70 @@ La configuration résultante sera:
    ProxyPass '/' 'balancer://static_cluster'
    ProxyPassReverse '/' 'balancer://static_cluster'
 </VirtualHost>
-
 ```
 
 
 # Additional steps: Load balancing: round-robin vs sticky sessions
+
+*Round-Robin*: Le round-bin est, entre autre, un algorithme de load balancing, permettant
+de répartir la charge (clients) entre les différents _nodes_ d'un _cluster_.
+
+Le fonctionnement du round-robin est simple, il distribue séquentiellement les requêtes vers ses _nodes_, toujours
+dans le même ordre:
+
+![](./figures/round-robin-load-balancing-diagram.webp)
+<small>[source](https://avinetworks.com/glossary/round-robin-load-balancing/)</small>
+
+*Sticky session*: Il arrive souvent que l'on doive conserver des informations entre les requêtes d'un même utilisateur (session).
+On ne peut donc pas rediriger les requêtes d'un même utilisateur vers un autre _node_ car on perdrait des informations relatives à la session.
+
+Le sticky session permet donc de d'envoyer toutes les requêtes d'un utilisateur spécifique vers le même _node_.
+
+![](./figures/sticky-without.png)
+![](./figures/sticky-with.PNG)
+<small>[source](https://lakshitha-kasun.medium.com/load-balancing-and-sticky-sessions-in-clustering-c6f8d546a29c)</small>
+
+
+Dans cette étape, nous allons effectuer une démonstration des sticky session.
+
+Et démontrer le fonctionnement d'un load balancer round-robin.
+
+
+## Docker
+
+Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous modifions simplement notre script PHP pour ajouter les configuration relatives au sticky session, voici le résultat de configuration avec sticky sessions:
+
+```conf
+<VirtualHost *:80>
+   ServerName reverse.res.ch
+
+   # Routes for api requests (random grades)
+   Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+   <Proxy 'balancer://dynamic_cluster'>
+      BalancerMember "http://172.17.0.3:3000/" route=1
+      BalancerMember "http://172.17.0.9:3000/" route=2
+      BalancerMember "http://172.17.0.10:3000/" route=3
+      ProxySet stickysession=ROUTEID
+	</Proxy>
+
+   ProxyPass '/api/' 'balancer://dynamic_cluster'
+   ProxyPassReverse '/api/' 'balancer://dynamic_cluster'
+
+   # Routes for static website
+   Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+   <Proxy 'balancer://static_cluster'>
+      BalancerMember "http://172.17.0.2:80/" route=1
+      BalancerMember "http://172.17.0.5:80/" route=2
+      BalancerMember "http://172.17.0.6:80/" route=3
+      ProxySet stickysession=ROUTEID
+	</Proxy>
+
+   ProxyPass '/' 'balancer://static_cluster'
+   ProxyPassReverse '/' 'balancer://static_cluster'
+</VirtualHost>
+```
+
+
 
 # Additional steps: Dynamic cluster management
 
