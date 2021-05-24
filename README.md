@@ -282,7 +282,7 @@ Pour cette étape nous ré-utilisons la même image Docker, nous modifions seule
 il permet désormais d'avoir un nombre variable d'hôtes pour nos deux services. On spécifie nos hôtes par une liste d'addresses séparées par des virgules.
 Pour démarrer le load balancing:
 
-- `docker build -t res/load-balancing .`
+- `docker build -t res/load-balancing ./loadBalancing`
 
 - `docker run res/load-balancing`
 
