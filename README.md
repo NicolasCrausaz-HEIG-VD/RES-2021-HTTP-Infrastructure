@@ -284,8 +284,6 @@ Pour démarrer le load balancing:
 
 - `docker build -t res/load-balancing .`
 
-- `docker run res/load-balancing`
-
 - `docker run -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/load-balancing`
 
 La configuration résultante sera par exemple:
@@ -380,6 +378,9 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 </VirtualHost>
 ```
 
+- `docker build -t res/sticky-session ./round-sticky`
+
+- `docker run -d -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/sticky-session`
 
 
 # Additional steps: Dynamic cluster management
