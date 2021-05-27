@@ -382,6 +382,7 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 
 - `docker run -d -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/sticky-session`
 
+TODO: MOYEN POUR TESTER
 
 # Additional steps: Dynamic cluster management
 
@@ -395,13 +396,12 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 
 ## Installation / première utilisation:
 
-Pour installer portainer, il suffit d'exécuter ces 2 commandes (Docker doit être installé et doit tourné sur votre machine):
+Pour installer portainer, il suffit d'exécuter ces 2 commandes:
 
 1. `docker volume create portainer_data`
 2. `docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce`
 
-Une fois le container lancé (vous pouvez vérifier avec docker ps), ouvrez votre navigateur préféré et entré l'URL suivante:
-[URL](http://localhost:9000/)
+Une fois le container lancé l'interface portainer est disponible [ICI](http://localhost:9000/).
 
 Une page d'inscription à portainer comme ci-dessous va normalement s'afficher.
 
@@ -410,7 +410,6 @@ Une page d'inscription à portainer comme ci-dessous va normalement s'afficher.
 Remplissez les champs _Username_ (par défaut avec la valeur admin), _Password_ et _Confirm password_.
 Vous pouvez décocher la checkbox _Allow connection..._ si vous le souhaitez.
 Cliquez ensuite sur _Create user_.
-
 
 *Attention:* Mémorisez-vous bien votre nom d'utilisateur et votre mot de passe car ils vous seront demandés à chaque connexion à l'UI portainer.
 

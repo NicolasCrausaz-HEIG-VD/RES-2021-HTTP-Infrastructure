@@ -131,6 +131,9 @@ case "$1" in
 
    9 )
       # Additional steps: Management UI
+      echo "This step cannot be executed with the script, please run";
+      echo "docker volume create portainer_data";
+      echo "docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce";
       ;;
 
    * )
@@ -138,7 +141,5 @@ case "$1" in
       exit;
       ;;
 esac
-
-read var1
 
 sleep 10
