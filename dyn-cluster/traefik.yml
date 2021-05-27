@@ -6,11 +6,3 @@ providers:
 # API and dashboard configuration
 api:
   insecure: true
-
-http:
-  services:
-    reverse-res:
-      loadBalancer:
-        servers:
-        - url: "http://172.17.0.2:80/"
-        - url: "http://172.17.0.5:80/"
