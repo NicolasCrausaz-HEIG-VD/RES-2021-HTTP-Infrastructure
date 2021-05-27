@@ -382,3 +382,82 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 # Additional steps: Dynamic cluster management
 
 # Additional steps: Management UI
+
+## Sources: 
+[source](https://documentation.portainer.io/v2.0/deploy/ceinstalldocker/) (Docker on Windows WSL / Docker Desktop)
+[source](https://documentation.portainer.io/v2.0/deploy/initial/)
+
+## Installation / première utilisation:
+
+Pour installer portainer, il suffit d'exécuter ces 2 commandes (Docker doit être installé et doit tourné sur votre machine):
+
+1. docker volume create portainer_data
+2. docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
+
+Une fois le container lancé (vous pouvez vérifier avec docker ps), ouvrez votre navigateur préféré et entré l'URL suivante:
+http://localhost:9000/
+
+Une page d'inscription à portainer comme ci-dessous va normallement d'afficher.
+
+![](./figures/subscribe.PNG)
+
+Remplissez les champs _Username_ (par défaut avec la valeur admin), _Password_ et _Confirm password_.
+Vous pouvez décocher la checkbox _Allow connection..._ si vous le souhaitez.
+Cliquez ensuite sur _Create user_.
+
+
+*Attention:* Rappelez-vous bien de votre nom d'utilisateur et votre mot de passe car ils vous seront demandés à chaque connexion à l'UI portainer.
+
+Vous arrivez maintenant sur la page suivante:
+
+![](./figures/environmentChoice.PNG)
+
+Sélectionnez l'environement Docker en cliquant sur _Docker Manage the local Docker environment_.
+Cliquez ensuite sur le bouton _Connect_.
+
+Vous arrivez maintenant sur la page suivante:
+
+![](./figures/localEnvironment.PNG)
+
+Cliquez sur _local_ pour arriver sur la Dashboard.
+
+
+## Réutilisation / seconde utilisation:
+
+Pour lancer portainer une fois installé, il suffit d'exécuter cette commande sur le container arrêter:
+
+1. docker container restart portainer
+
+Une fois le container lancé (vous pouvez vérifier avec docker ps), ouvrez votre navigateur préféré et entré l'URL suivante:
+http://localhost:9000/
+
+Une fois sur la page, connectez vous à l'aide de votre nom d'utilisateur et mod de passe.
+
+![](./figures/connection.PNG)
+
+
+## Visite de l'UI
+
+Lancer votre navigateur préféré avec l'URL: http://localhost:9000/
+
+## Quitter l'UI
+
+Pour quitter l'interface, il suffit de :
+
+1. Cliquez sur _log out_ en haut à droite
+2. Quitter la page internet
+3. Effectuer la commande: docker kill portainer
+
+## Utilisation de portainer
+
+Voici un tutoriel de comment utiliser portainer:
+[source](https://documentation.portainer.io/v2.0/deploy/initial/)
+https://documentation.portainer.io/v2.0/deploy/initial
+Vous pouvez suivre le tutoriel _User Guide_ et _Admin Guide_.
+
+## Information complémentaires
+
+Le nom d'utilisateur (username) par défaut est *admin*.
+Le container _portainer_ n'est prévu pour être supprimé à chaque fois. Le but est de le relancé pour chaque utilisation.
+*Attention* à ne pas stopper ce container sur l'UI, sinon elle ne fonctionnera plus.
+Il ne faut pas non plus kill le container _portainer_ si vous voulez continuer à utiliser l'interface.
