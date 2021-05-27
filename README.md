@@ -288,7 +288,7 @@ Pour démarrer le load balancing:
 
 - `docker run -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/load-balancing`
 
-La configuration résultante sera:
+La configuration résultante sera par exemple:
 
 ```conf
 <VirtualHost *:80>
@@ -301,9 +301,6 @@ La configuration résultante sera:
       BalancerMember "http://172.17.0.10:3000/"
 	</Proxy>
 
-   ProxyPass '/api/' 'balancer://dynamic_cluster'
-   ProxyPassReverse '/api/' 'balancer://dynamic_cluster'
-
    # Routes for static website
    <Proxy 'balancer://static_cluster'>
       BalancerMember "http://172.17.0.2:80/"
@@ -311,10 +308,16 @@ La configuration résultante sera:
       BalancerMember "http://172.17.0.6:80/"
 	</Proxy>
 
-   ProxyPass '/' 'balancer://static_cluster'
-   ProxyPassReverse '/' 'balancer://static_cluster'
+   ProxyPass '/api/' 'balancer://dynamic_cluster/'
+   ProxyPassReverse '/api/' 'balancer://dynamic_cluster/'
+
+   ProxyPass '/' 'balancer://static_cluster/'
+   ProxyPassReverse '/' 'balancer://static_cluster/'
 </VirtualHost>
 ```
+
+Pour tester le load balancing, une manière de faire est d'éteindre certains container pour voir qu'un autre serveur répondra
+à la place de l'ancien. Notez qu'il faut parfois attendre un peu.
 
 
 # Additional steps: Load balancing: round-robin vs sticky sessions
@@ -360,9 +363,6 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
       ProxySet stickysession=ROUTEID
 	</Proxy>
 
-   ProxyPass '/api/' 'balancer://dynamic_cluster'
-   ProxyPassReverse '/api/' 'balancer://dynamic_cluster'
-
    # Routes for static website
    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
    <Proxy 'balancer://static_cluster'>
@@ -372,8 +372,11 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
       ProxySet stickysession=ROUTEID
 	</Proxy>
 
-   ProxyPass '/' 'balancer://static_cluster'
-   ProxyPassReverse '/' 'balancer://static_cluster'
+   ProxyPass '/api/' 'balancer://dynamic_cluster/'
+   ProxyPassReverse '/api/' 'balancer://dynamic_cluster/'
+   
+   ProxyPass '/' 'balancer://static_cluster/'
+   ProxyPassReverse '/' 'balancer://static_cluster/'
 </VirtualHost>
 ```
 

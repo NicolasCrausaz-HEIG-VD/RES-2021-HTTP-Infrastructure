@@ -50,8 +50,8 @@ case "$1" in
    5 )
       # Step 5: Dynamic reverse proxy configuration
 
-      # eval "docker build -t res/node-express ./step2";
-      # eval "docker build -t res/static-ajax ./step4";
+      eval "docker build -t res/node-express ./step2";
+      eval "docker build -t res/static-ajax ./step4";
       eval "docker build -t res/dynamic-proxy ./step5"
 
       id=$(eval "docker run -d res/static-ajax")
@@ -60,7 +60,6 @@ case "$1" in
       APIIP=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":3000";
 
       eval "docker run -p 8080:80 -d -e STATIC_APP=$staticIP -e DYNAMIC_APP=$APIIP res/dynamic-proxy";
-      
       ;;
 
    6 )
@@ -98,6 +97,32 @@ case "$1" in
 
    7 )
       # Additional steps: Load balancing: round-robin vs sticky sessions
+      eval "docker build -t res/node-express ./step2";
+      eval "docker build -t res/static-ajax ./step4";
+      eval "docker build -t res/round-sticky ./round-sticky"
+
+      staticNodes=''
+      APINodes=''
+
+      for i in {0..2}
+      do
+         id=$(eval "docker run -d res/static-ajax")
+         staticNodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":80";
+         if [ $i != 2 ]; then
+            staticNodes+=",";
+         fi
+      done
+
+      for i in {0..2}
+      do
+         id=$(eval "docker run -d res/node-express")
+         APINodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":3000";
+         if [ $i != 2 ]; then
+            APINodes+=",";
+         fi
+      done
+      
+      eval "docker run -p 8080:80 -d -e STATIC_APP=$staticNodes -e DYNAMIC_APP=$APINodes res/round-sticky";
       ;;
 
    8 )
