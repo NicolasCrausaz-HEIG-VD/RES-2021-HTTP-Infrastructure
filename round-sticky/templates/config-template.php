@@ -19,8 +19,6 @@
    		?>
 		ProxySet stickysession=ROUTEID
 	</Proxy>
-   	ProxyPass '/api/' 'balancer://dynamic_cluster'
-   	ProxyPassReverse '/api/' 'balancer://dynamic_cluster'
 
    # Routes for static website
    <Proxy 'balancer://static_cluster'>
@@ -32,6 +30,9 @@
    		?>
 		ProxySet stickysession=ROUTEID
 	</Proxy>
-   	ProxyPass '/' 'balancer://static_cluster'
-   	ProxyPassReverse '/' 'balancer://static_cluster'
+	ProxyPass '/api/' 'balancer://dynamic_cluster/'
+   	ProxyPassReverse '/api/' 'balancer://dynamic_cluster/'
+	
+   	ProxyPass '/' 'balancer://static_cluster/'
+   	ProxyPassReverse '/' 'balancer://static_cluster/'
 </VirtualHost>
