@@ -1,16 +1,22 @@
 #!/bin/bash
 
 function step1 {
-   eval "docker build -t res/static-apache ./step1";
+   if [ $OMIT_BUILD = false ]
+   then
+      eval "docker build -t res/static-apache ./step1";
+   fi
    eval "docker run -d --name static_apache -p 9090:80 res/static-apache";
 }
 
 function step2 {
+   if [ $OMIT_BUILD = false ]
+   then
    eval "cd step2/src";
    eval "npm install";
    eval "cd ..";
    eval "cd ..";
    eval "docker build -t res/node-express ./step2";
+   fi
    eval "docker run -d --name express_dynamic -p 8282:3000 res/node-express";
 }
 
@@ -21,8 +27,21 @@ fi
 
 if [ "$1" = "purge" ]; then
   eval `docker kill $(docker ps -q)`;
-  eval `docker rm $(docker ps -a -q)`;
+
+      if [ "$2" = "-rm" ]; then
+         eval `docker rm $(docker ps -a -q)`;
+      fi
   exit;
+fi
+  #eval `docker rm $(docker ps -a -q)`;
+  exit;
+fi
+
+# Flag to omit build
+if [ "$2" = "--nobuild" ]; then
+   OMIT_BUILD=true
+else
+   OMIT_BUILD=false
 fi
 
 echo "Specified step: $1";
@@ -43,22 +62,31 @@ case "$1" in
       # Step 3: Reverse proxy with apache (static configuration)
       step2;
       step1;
-      eval "docker build -t res/reverseproxy ./step3"
+      if [ $OMIT_BUILD = false ]
+      then
+         eval "docker build -t res/reverseproxy ./step3"
+      fi
       eval "docker run -d -p 8080:80 --name reverse_proxy res/reverseproxy"
    ;;
 
    4 )
       # Step 4: AJAX requests
-      eval "docker build -t res/static-ajax ./step4"
+      if [ $OMIT_BUILD = false ]
+      then
+         eval "docker build -t res/static-ajax ./step4"
+      fi
       eval "docker run -d --name static_ajax -p 9090:80 res/static-ajax"
       ;;
 
    5 )
       # Step 5: Dynamic reverse proxy configuration
 
-      eval "docker build -t res/node-express ./step2";
-      eval "docker build -t res/static-ajax ./step4";
-      eval "docker build -t res/dynamic-proxy ./step5"
+      if [ $OMIT_BUILD = false ]
+      then
+         eval "docker build -t res/node-express ./step2";
+         eval "docker build -t res/static-ajax ./step4";
+         eval "docker build -t res/dynamic-proxy ./step5"
+      fi
 
       id=$(eval "docker run -d res/static-ajax")
       staticIP=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":80";
@@ -73,9 +101,12 @@ case "$1" in
       # Creates 3 static containers & 3 API containers
       # Gets theirs IP to run the reverse proxy
 
-      eval "docker build -t res/node-express ./step2";
-      eval "docker build -t res/static-ajax ./step4";
-      eval "docker build -t res/load-balancing ./loadBalancing"
+      if [ $OMIT_BUILD = false ]
+      then
+         eval "docker build -t res/node-express ./step2";
+         eval "docker build -t res/static-ajax ./step4";
+         eval "docker build -t res/load-balancing ./loadBalancing"
+      fi
 
       staticNodes=''
       APINodes=''
@@ -103,9 +134,12 @@ case "$1" in
 
    7 )
       # Additional steps: Load balancing: round-robin vs sticky sessions
-      eval "docker build -t res/node-express ./step2";
-      eval "docker build -t res/static-ajax ./step4";
-      eval "docker build -t res/round-sticky ./round-sticky"
+      if [ $OMIT_BUILD = false ]
+      then
+         eval "docker build -t res/node-express ./step2";
+         eval "docker build -t res/static-ajax ./step4";
+         eval "docker build -t res/round-sticky ./round-sticky"
+      fi
 
       staticNodes=''
       APINodes=''
@@ -133,6 +167,11 @@ case "$1" in
 
    8 )
       # Additional steps: Dynamic cluster management
+
+      if [ $OMIT_BUILD = false ]
+      then
+         echo "todo";
+      fi
       ;;
 
    9 )
