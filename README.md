@@ -33,11 +33,9 @@ FROM php:7.4-apache
 COPY src/ /var/www/html/
 ```
 
-Pour construire notre image et démarrer le container, il faut exécuter les commandes suivantes:
+Pour construire notre image et démarrer le container:
 
-- `docker build -t res/static-apache ./step1`
-
-- `docker run -d --name static_apache -p 9090:80 res/static-apache`
+- `./run_step.sh 1`
 
 Notre site est ainsi accessible sur [http://localhost:9090/](http://localhost:9090/)
 
@@ -59,17 +57,9 @@ COPY src/ /opt/app
 CMD ["node", "/opt/app/app.js"]
 ```
 
-Pour mettre en place cette application, il faut exécuter les commandes suivantes:
+Pour mettre en place cette application:
 
-- `cd step2/src`
-
-- `npm install`
-
-- `cd ..`
-
-- `docker build -t res/node-express .`
-
-- `docker run -d --name express_dynamic -p 8282:3000 res/node-express`
+- `./run_step.sh 2`
 
 Notre API est maintenant accessible sur sur [http://localhost:8282/](http://localhost:8282/).
 
@@ -155,16 +145,9 @@ ici, nous avons ajouté:
 
 `localhost reverse.res.ch`
 
-Il faut également démarrer les containers dans le bon ordre:
+Pour démarrer l'infrastructure:
 
-- `docker run -d --name static_apache -p 9090:80 res/static-apache`
-
-- `docker run -d --name express_dynamic -p 8282:3000 res/node-express`
-
-- `docker build -t res/reverseproxy .`
-
-- `docker run -d -p 8080:80 --name reverse_proxy  res/reverseproxy`
-
+- `./run_step.sh 3`
 
 Notre reverse proxy est désormais fonctionnel, on peut accéder au site statique apache: [http://reverse.res.ch:8080](http://reverse.res.ch:8080)
 ainsi qu'a l'API express [http://reverse.res.ch:8080/api/grades](http://reverse.res.ch:8080/api/grades)
@@ -214,9 +197,7 @@ COPY src/ /var/www/html/
 
 Notre container peut être démarré de cette manière:
 
-- `docker build -t res/static-ajax ./step4`
-
-- `docker run -d --name static_ajax -p 9090:80 res/static-ajax`
+- `./run_step.sh 4`
 
 Pour que les requêtes vers l'API soient fonctionnelle, il accéder au site par le reverse proxy [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
 Ceci est du à la Policy _Same-origin_ qui restreint la manière dont les ressources peuvent être chargées depuis une origine, vers une origine différente.
@@ -231,7 +212,7 @@ Il y a deux solution pour contourner cette policy:
 - Mettre en place la validation *CORS* (Cross-origin resource sharing) au niveau du serveur HTTP (express), ce qui permettra de partager des 
 ressources entre plusieurs origines.
 
-TODO: Inserer une capture des notes
+![](./figures/grades.png)
 
 # Step 5: Dynamic reverse proxy configuration
 
@@ -262,9 +243,7 @@ Ces variables nous permettent de spécifier les adresses de nos deux services (s
 
 Il faut démarrer les containers sur step 2 et 4, puis démarrer notre reverse proxy dynamique:
 
-- `docker build -t res/dynamic-proxy .`
-
-- `docker run -e STATIC_APP=172.17.0.3:80 -e DYNAMIC_APP=172.17.0.2:3000 res/dynamic-proxy`
+- `./run_step.sh 5`
 
 Pour tester le reverse proxy, il suffit de se rendre sur [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
 Le site doit fonctionner comme auparavant, c'est à dire mettre à jour la liste de note toutes les 3 secondes.
@@ -282,9 +261,7 @@ Pour cette étape nous ré-utilisons la même image Docker, nous modifions seule
 il permet désormais d'avoir un nombre variable d'hôtes pour nos deux services. On spécifie nos hôtes par une liste d'addresses séparées par des virgules.
 Pour démarrer le load balancing:
 
-- `docker build -t res/load-balancing .`
-
-- `docker run -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/load-balancing`
+- `./run_step.sh 6`
 
 La configuration résultante sera par exemple:
 
@@ -317,6 +294,19 @@ La configuration résultante sera par exemple:
 Pour tester le load balancing, une manière de faire est d'éteindre certains container pour voir qu'un autre serveur répondra
 à la place de l'ancien. Notez qu'il faut parfois attendre un peu.
 
+Pour tester cette étape, il suffit d'ouvrir [http://reverse.res.ch:8080](http://reverse.res.ch:8080), ouvrir les outils de 
+développement -> Application -> Cookies. On voit cette fois que la valeur du cookie change à chaque requête.
+
+Notez que pour cette étape, nous avons ajouté des éléments de configuration pour transmettre un cookie.
+
+On peut également démontrer le fonctionnement par défaut du round-robin que nous verrons à l'étape suivante.
+En effet le round robin est le fonctionnement du load balancing par défaut d'apache: à chaque requête, le client
+recevra une réponse du node suivant selon l'ordre configuré.
+
+On voit ici le changement de _node_ grâce au cookie, à chaque requête vers l'API:
+
+![](./figures/cookie-robin.gif)
+
 
 # Additional steps: Load balancing: round-robin vs sticky sessions
 
@@ -334,15 +324,14 @@ On ne peut donc pas rediriger les requêtes d'un même utilisateur vers un autre
 
 Le sticky session permet donc de d'envoyer toutes les requêtes d'un utilisateur spécifique vers le même _node_.
 
+Le problème des sticky sessions est que si le node n'est plus atteignable, le client perds sa session. Il faudrait donc répliquer
+les sessions entre tous les _nodes_.
+
 ![](./figures/sticky-without.png)
 ![](./figures/sticky-with.PNG)
 <small>[source](https://lakshitha-kasun.medium.com/load-balancing-and-sticky-sessions-in-clustering-c6f8d546a29c)</small>
 
-
-Dans cette étape, nous allons effectuer une démonstration des sticky session.
-
-Et démontrer le fonctionnement d'un load balancer round-robin.
-
+Dans cette étape, nous allons effectuer la mise en place des sticky sessions.
 
 ## Docker
 
@@ -378,11 +367,13 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 </VirtualHost>
 ```
 
-- `docker build -t res/sticky-session ./round-sticky`
+- `./run_step.sh 7`
 
-- `docker run -d -e STATIC_APP=172.17.0.2:80,172.17.0.5:80,172.17.0.6:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.9:3000,172.17.0.10:3000 res/sticky-session`
+Pour tester cette étape, il suffit d'ouvrir [http://reverse.res.ch:8080](http://reverse.res.ch:8080), ouvrir les outils de 
+développement -> Application -> Cookies.
 
-TODO: MOYEN POUR TESTER
+On voit cette fois que la valeur du cookie ne change pas à chaque requête. Cette valeur changera uniquement lors de la création d'une 
+nouvelle session.
 
 # Additional steps: Dynamic cluster management
 

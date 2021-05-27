@@ -10,6 +10,7 @@
    ServerName reverse.res.ch
 
    # Routes for api requests (random grades)
+	Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
    <Proxy 'balancer://dynamic_cluster'>
    		<?php 
    			foreach($dynamicsTokens as $i => $server)
@@ -30,9 +31,10 @@
    		?>
 		ProxySet stickysession=ROUTEID
 	</Proxy>
-	ProxyPass '/api/' 'balancer://dynamic_cluster/'
-   	ProxyPassReverse '/api/' 'balancer://dynamic_cluster/'
-	
-   	ProxyPass '/' 'balancer://static_cluster/'
-   	ProxyPassReverse '/' 'balancer://static_cluster/'
+
+	ProxyPass '/api/' 'balancer://dynamic_cluster/' stickysession=ROUTEID|jsessionid scolonpathdelim=On
+	ProxyPassReverse '/api/' 'balancer://dynamic_cluster/'
+
+	ProxyPass '/' 'balancer://static_cluster/' stickysession=ROUTEID|jsessionid scolonpathdelim=On
+	ProxyPassReverse '/' 'balancer://static_cluster/'
 </VirtualHost>

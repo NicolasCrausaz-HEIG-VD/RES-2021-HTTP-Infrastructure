@@ -19,6 +19,12 @@ if [ "$1" = "" ]; then
   exit;
 fi
 
+if [ "$1" = "purge" ]; then
+  eval `docker kill $(docker ps -q)`;
+  eval `docker rm $(docker ps -a -q)`;
+  exit;
+fi
+
 echo "Specified step: $1";
 
 case "$1" in
