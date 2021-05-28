@@ -19,7 +19,7 @@ Les outils utilisés tout au long de ce laboratoire sont:
 
 - `.\run_step.sh <number>`, number = numéro de l'étape [1 à 9].
 
-- `.\run_step.sh <number> --nobuild`, number = numéro de l'étape [1 à 9], permet d'omettre le build des images (utile pour gagner du temps si cela à déjà été fait)
+- `.\run_step.sh <number> --nobuild`, number = numéro de l'étape [1 à 9], permet d'omettre le build des images (utile pour gagner du temps si cela a déjà été fait)
 
 - `.\run_step.sh purge`, permet d'éteindre tous les containers.
 
@@ -159,8 +159,13 @@ Notre configuration est donc:
 </VirtualHost>
 ```
 
-Pour que cette configuration fonctionne, il faut ajouter une entrée DNS dans le fichier HOST de la machine hôte
-ici, nous avons ajouté:
+Pour que cette configuration fonctionne, il faut ajouter une entrée DNS dans le fichier HOST de la machine hôte.
+Voici où est situé le fichier host sur les 3 OS les plus utilisés:
+Windows 10 - `"C:\Windows\System32\drivers\etc\hosts"`
+Linux - `"/etc/hosts"`
+Mac OS X - `"/private/etc/hosts"`
+
+Nous avons donc ajouté la ligne suivante au fichier HOST:
 
 `localhost reverse.res.ch`
 
@@ -171,7 +176,7 @@ Pour démarrer l'infrastructure:
 Notre reverse proxy est désormais fonctionnel, on peut accéder au site statique apache: [http://reverse.res.ch:8080](http://reverse.res.ch:8080)
 ainsi qu'a l'API express [http://reverse.res.ch:8080/api/grades](http://reverse.res.ch:8080/api/grades)
 
-Cette configuration actuelle est très contraignante car nous devons être sûr que les bonnes addresses IP des containers sont spécifiées
+Cette configuration actuelle est très contraignante car nous devons être sûr que les bonnes addresses IP des containers soient spécifiées
 dans la configuration apache du reverse proxy.
 
 Voici l'état actuel de notre infrastructure 
@@ -223,7 +228,7 @@ Notre container peut être démarré de cette manière:
 
 - `./run_step.sh 4`
 
-Pour que les requêtes vers l'API soient fonctionnelle, il accéder au site par le reverse proxy [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
+Pour que les requêtes vers l'API soient fonctionnelles, il faut accéder au site par le reverse proxy [http://reverse.res.ch:8080](http://reverse.res.ch:8080).
 Ceci est du à la Policy _Same-origin_ qui restreint la manière dont les ressources peuvent être chargées depuis une origine, vers une origine différente.
 
 Dans notre cas, si l'on utilise pas le reverse proxy, on aurait notre site statique sur localhost:9090 et notre API sur localhost:8282.
@@ -231,9 +236,9 @@ Ces deux origines sont considérées comme différentes, de ce fait notre site n
 
 Il y a deux solution pour contourner cette policy:
 
-- Utiliser un *reverse proxy*, ce qui fera que les deux sites soient dans la même _origin_. C'est la solution choisie ici.
+- Utiliser un *reverse proxy*, ainsi les deux sites seront de la même _origin_. C'est la solution choisie ici.
 
-- Mettre en place la validation *CORS* (Cross-origin resource sharing) au niveau du serveur HTTP (API express), ce qui permettra de partager des 
+- Mettre en place la validation *CORS* (Cross-origin resource sharing) au niveau du serveur HTTP (API express), ce qui permettrait de partager des 
 ressources entre plusieurs origines.
 
 </br>
@@ -265,7 +270,7 @@ Nous copions aussi le fichier _apache2-foreground_, il s'agit du script qui est 
 nous avons utilisé ce fichier pour ajouter des variables d'environnement à notre container ($STATIC_APP et $DYNAMIC_APP).
 Ces variables nous permettent de spécifier les adresses de nos deux services (site et API).
 
-Il faut démarrer les containers sur step 2 et 4, puis démarrer notre reverse proxy dynamique:
+Il faut démarrer notre reverse proxy dynamique:
 
 - `./run_step.sh 5`
 
@@ -285,6 +290,9 @@ désormais un rôle supplémentaire de load balancer, s'occupera de répartir le
 
 Pour cette étape nous ré-utilisons la même image Docker, nous modifions seulement notre script PHP de génération de configuration apache,
 il permet désormais d'avoir un nombre variable d'hôtes pour nos deux services. On spécifie nos hôtes par une liste d'addresses séparées par des virgules.
+Voici un exemple de commande pour fournir tous les containers utilisés dans le cluster effectuant du load balancing:
+`docker run -p 8080:80 -d -e STATIC_APP=172.17.0.6:80,172.17.0.7:80,172.17.0.8:80,172.17.0.5:80 -e DYNAMIC_APP=172.17.0.3:3000,172.17.0.4:3000,172.17.0.5:3000 res/dynamic-proxy`
+
 Pour démarrer le load balancing:
 
 - `./run_step.sh 6`
@@ -328,7 +336,7 @@ démontrer visuellement le changement de _node_.
 
 On peut également démontrer le fonctionnement par défaut du round-robin que nous verrons à l'étape suivante.
 En effet le round robin est le fonctionnement du load balancing par défaut d'apache: à chaque requête, le client
-recevra une réponse du node suivant selon l'ordre configuré.
+recevra une réponse du node suivant l'ordre configuré.
 
 On voit ici le changement de _node_ grâce au cookie, à chaque requête vers l'API:
 
@@ -351,7 +359,7 @@ dans le même ordre:
 Par exemple pour conserver un panier d'achat sur un E-commerce.
 On ne peut donc pas rediriger les requêtes d'un même utilisateur vers un autre _node_ car on perdrait des informations relatives à la session.
 
-Le sticky session permet donc de d'envoyer toutes les requêtes d'un utilisateur spécifique vers le même _node_, ceci jusqu'à la fin de la session.
+Le sticky session permet donc d'envoyer toutes les requêtes d'un utilisateur spécifique vers le même _node_, ceci jusqu'à la fin de la session.
 
 Le problème des sticky sessions est que si le node n'est plus atteignable, le client perdra sa session. Il faudrait donc idéalement répliquer
 les sessions entre tous les _nodes_.
@@ -369,7 +377,7 @@ Dans cette étape, nous allons effectuer la mise en place des sticky sessions.
 
 ## Docker
 
-Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous modifions simplement notre script PHP pour ajouter les configuration relatives au sticky session, voici le résultat d'une configuration avec sticky sessions:
+Pour le sticky session, nous utilisons le même Dockerfile qu'au step 6 (Load balancing: multiple server nodes), nous modifions simplement notre script PHP pour ajouter les configuration relatives au sticky session, voici le résultat d'une configuration avec sticky sessions:
 
 ```conf
 <VirtualHost *:80>
@@ -401,6 +409,7 @@ Pour le sticky session, nous utilisons le même Dockerfile qu'au step 5, nous mo
 </VirtualHost>
 ```
 
+Pour démarrer le load balancing:
 - `./run_step.sh 7`
 
 Pour tester cette étape, il suffit d'ouvrir [http://reverse.res.ch:8080](http://reverse.res.ch:8080), ouvrir les outils de 
@@ -413,7 +422,8 @@ nouvelle session.
 
 # Additional steps: Dynamic cluster management
 
-TODO
+Étape non réalisée après de nombreuses tentatives et recherches.
+Le moyen le plus simple d'implémenter cette partie serait sûrement d'utiliser Traefik ou un de ces concurrents comme Serf.
 
 </br>
 
@@ -421,7 +431,7 @@ TODO
 
 Cette étape utilise [Portainer](https://documentation.portainer.io)
 
-Portainer est une interface utilisateur web qui permet, entre autres, d'administrer un environnement Docker. Il offre par exemple des opération telles que la création, suppression, démarrages etc. de containers.
+Portainer est une interface utilisateur web qui permet, entre autres, d'administrer un environnement Docker. Il offre par exemple des opération telles que la création, suppression, démarrages etc. de containers et d'images.
 
 ## Installation
 
@@ -476,6 +486,9 @@ Le nom d'utilisateur (username) par défaut est *admin*.
 Le container _portainer_ n'est pas prévu pour être supprimé à chaque fois. Le but est de le relancer pour chaque utilisation.
 
 Attention à ne pas stopper les containers relatifs a portainer depuis l'interface.
+
+Si vous supprimez le container, il vous suffit d'en re-créer un depuis l'image.
+Vous ne perdrez pas toute la configuration réalisée plus tôt (isncription et divers choix).
 
 <br>
 
