@@ -12,7 +12,7 @@ Les outils utilisés tout au long de ce laboratoire sont:
 
 - Docker + WSL (Windows)
 - Node.js v14.16
-- php v7.4
+- PHP v7.4
 - apache
 
 *Le script [run_step.sh](./run_step.sh) à été réalisé afin de pouvoir déployer les étapes plus rapidement*, il s'utilise de la manière suivante:
@@ -488,7 +488,7 @@ Le container _portainer_ n'est pas prévu pour être supprimé à chaque fois. L
 Attention à ne pas stopper les containers relatifs a portainer depuis l'interface.
 
 Si vous supprimez le container, il vous suffit d'en re-créer un depuis l'image.
-Vous ne perdrez pas toute la configuration réalisée plus tôt (isncription et divers choix).
+Vous ne perdrez pas toute la configuration réalisée plus tôt (inscription et divers choix).
 
 <br>
 
