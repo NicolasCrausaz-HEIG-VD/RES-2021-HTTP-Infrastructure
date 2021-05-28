@@ -298,15 +298,15 @@ La configuration résultante sera par exemple:
    # Routes for api requests (random grades)
    <Proxy 'balancer://dynamic_cluster'>
       BalancerMember "http://172.17.0.3:3000/"
-      BalancerMember "http://172.17.0.9:3000/"
-      BalancerMember "http://172.17.0.10:3000/"
+      BalancerMember "http://172.17.0.4:3000/"
+      BalancerMember "http://172.17.0.5:3000/"
 	</Proxy>
 
    # Routes for static website
    <Proxy 'balancer://static_cluster'>
-      BalancerMember "http://172.17.0.2:80/"
-      BalancerMember "http://172.17.0.5:80/"
       BalancerMember "http://172.17.0.6:80/"
+      BalancerMember "http://172.17.0.7:80/"
+      BalancerMember "http://172.17.0.8:80/"
 	</Proxy>
 
    ProxyPass '/api/' 'balancer://dynamic_cluster/'
