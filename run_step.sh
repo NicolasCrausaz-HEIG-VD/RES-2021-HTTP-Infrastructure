@@ -33,9 +33,6 @@ if [ "$1" = "purge" ]; then
       fi
   exit;
 fi
-  #eval `docker rm $(docker ps -a -q)`;
-  exit;
-fi
 
 # Flag to omit build
 if [ "$2" = "--nobuild" ]; then
@@ -64,18 +61,23 @@ case "$1" in
       step1;
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/reverseproxy ./step3"
+         eval "docker build -t res/reverseproxy ./step3";
       fi
-      eval "docker run -d -p 8080:80 --name reverse_proxy res/reverseproxy"
+      eval "docker run -d -p 8080:80 --name reverse_proxy res/reverseproxy";
    ;;
 
    4 )
       # Step 4: AJAX requests
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/static-ajax ./step4"
+         eval "docker build -t res/node-express ./step2";
+         eval "docker build -t res/reverseproxy ./step3";
+         eval "docker build -t res/static-ajax ./step4";
       fi
-      eval "docker run -d --name static_ajax -p 9090:80 res/static-ajax"
+
+      eval "docker run -d --name express_dynamic res/node-express";
+      eval "docker run -d --name static_ajax res/static-ajax";
+      eval "docker run -d -p 8080:80 --name reverse_proxy res/reverseproxy";
       ;;
 
    5 )
@@ -85,12 +87,12 @@ case "$1" in
       then
          eval "docker build -t res/node-express ./step2";
          eval "docker build -t res/static-ajax ./step4";
-         eval "docker build -t res/dynamic-proxy ./step5"
+         eval "docker build -t res/dynamic-proxy ./step5";
       fi
 
-      id=$(eval "docker run -d res/static-ajax")
+      id=$(eval "docker run -d res/static-ajax");
       staticIP=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":80";
-      id=$(eval "docker run -d res/node-express")
+      id=$(eval "docker run -d res/node-express");
       APIIP=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":3000";
 
       eval "docker run -p 8080:80 -d -e STATIC_APP=$staticIP -e DYNAMIC_APP=$APIIP res/dynamic-proxy";
@@ -105,7 +107,7 @@ case "$1" in
       then
          eval "docker build -t res/node-express ./step2";
          eval "docker build -t res/static-ajax ./step4";
-         eval "docker build -t res/load-balancing ./loadBalancing"
+         eval "docker build -t res/load-balancing ./loadBalancing";
       fi
 
       staticNodes=''
@@ -113,7 +115,7 @@ case "$1" in
 
       for i in {0..2}
       do
-         id=$(eval "docker run -d res/static-ajax")
+         id=$(eval "docker run -d res/static-ajax");
          staticNodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":80";
          if [ $i != 2 ]; then
             staticNodes+=",";
@@ -122,7 +124,7 @@ case "$1" in
 
       for i in {0..2}
       do
-         id=$(eval "docker run -d res/node-express")
+         id=$(eval "docker run -d res/node-express");
          APINodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":3000";
          if [ $i != 2 ]; then
             APINodes+=",";
@@ -138,7 +140,7 @@ case "$1" in
       then
          eval "docker build -t res/node-express ./step2";
          eval "docker build -t res/static-ajax ./step4";
-         eval "docker build -t res/round-sticky ./round-sticky"
+         eval "docker build -t res/round-sticky ./round-sticky";
       fi
 
       staticNodes=''
@@ -146,7 +148,7 @@ case "$1" in
 
       for i in {0..2}
       do
-         id=$(eval "docker run -d res/static-ajax")
+         id=$(eval "docker run -d res/static-ajax");
          staticNodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":80";
          if [ $i != 2 ]; then
             staticNodes+=",";
@@ -155,7 +157,7 @@ case "$1" in
 
       for i in {0..2}
       do
-         id=$(eval "docker run -d res/node-express")
+         id=$(eval "docker run -d res/node-express");
          APINodes+=$(eval "docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id")":3000";
          if [ $i != 2 ]; then
             APINodes+=",";

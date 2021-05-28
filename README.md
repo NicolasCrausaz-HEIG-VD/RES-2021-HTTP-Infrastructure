@@ -51,6 +51,8 @@ Pour construire notre image et démarrer le container:
 
 - `./run_step.sh 1`
 
+Pour information, la configuration par défaut (vHost) se trouve dans /etc/apache2/sites-enabled/000-default.conf
+
 Notre site est ainsi accessible sur [http://localhost:9090/](http://localhost:9090/)
 
 </br>
@@ -138,7 +140,7 @@ Cette API dispose de 4 routes:
 Cette étape consiste à mettre en place un reverse proxy avec apache, en utilisant une configuration statique.
 
 Nous avons créé un vHost faisant office de reverse proxy, il est chargé de rediriger une requête HTTP vers le bon serveur en fonction de l'URL de cette requête.
-Ainsi, les serveurs internes n'ont pas besoin d'ouvrir des portes en externes.
+Ainsi, les serveurs internes n'ont pas besoin d'ouvrir des ports en externes. Le reverse proxy est le seul point d'accès à nos deux services.
 
 Dans cette étape la configuration est faite de manière statique, ce qui n'est pas optimal car on doit reconfigurer nos fichiers de configuration et reconstruire notre image si les adresses IP de nos containers ont changés.
 
@@ -161,11 +163,12 @@ Notre configuration est donc:
 
 Pour que cette configuration fonctionne, il faut ajouter une entrée DNS dans le fichier HOST de la machine hôte.
 Voici où est situé le fichier host sur les 3 OS les plus utilisés:
-Windows 10 - `"C:\Windows\System32\drivers\etc\hosts"`
-Linux - `"/etc/hosts"`
-Mac OS X - `"/private/etc/hosts"`
 
-Nous avons donc ajouté la ligne suivante au fichier HOST:
+- Windows - `"C:\Windows\System32\drivers\etc\hosts"`
+- Linux - `"/etc/hosts"`
+- Mac OS X - `"/private/etc/hosts"`
+
+Dans notre cas, nous avons donc ajouté la ligne suivante au fichier HOST Windows:
 
 `localhost reverse.res.ch`
 
