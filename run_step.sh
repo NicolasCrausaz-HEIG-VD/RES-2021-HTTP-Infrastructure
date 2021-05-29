@@ -8,14 +8,18 @@ function step1 {
    eval "docker run -d --name static_apache -p 9090:80 res/static-apache";
 }
 
-function step2 {
-   if [ $OMIT_BUILD = false ]
-   then
+function buildstep2 {
    eval "cd step2/src";
    eval "npm install";
    eval "cd ..";
    eval "cd ..";
    eval "docker build -t res/node-express ./step2";
+}
+
+function step2 {
+   if [ $OMIT_BUILD = false ]
+   then
+      buildstep2;
    fi
    eval "docker run -d --name express_dynamic -p 8282:3000 res/node-express";
 }
@@ -70,7 +74,7 @@ case "$1" in
       # Step 4: AJAX requests
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/node-express ./step2";
+         buildstep2;
          eval "docker build -t res/reverseproxy ./step3";
          eval "docker build -t res/static-ajax ./step4";
       fi
@@ -85,7 +89,7 @@ case "$1" in
 
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/node-express ./step2";
+         buildstep2;
          eval "docker build -t res/static-ajax ./step4";
          eval "docker build -t res/dynamic-proxy ./step5";
       fi
@@ -105,7 +109,7 @@ case "$1" in
 
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/node-express ./step2";
+         buildstep2;
          eval "docker build -t res/static-ajax ./step4";
          eval "docker build -t res/load-balancing ./loadBalancing";
       fi
@@ -138,7 +142,7 @@ case "$1" in
       # Additional steps: Load balancing: round-robin vs sticky sessions
       if [ $OMIT_BUILD = false ]
       then
-         eval "docker build -t res/node-express ./step2";
+         buildstep2;
          eval "docker build -t res/static-ajax ./step4";
          eval "docker build -t res/round-sticky ./round-sticky";
       fi
@@ -172,7 +176,7 @@ case "$1" in
 
       if [ $OMIT_BUILD = false ]
       then
-         echo "todo";
+         echo "Not implemented yet";
       fi
       ;;
 
@@ -185,7 +189,6 @@ case "$1" in
 
    * )
       echo "Invalid step";
-      exit;
       ;;
 esac
 
